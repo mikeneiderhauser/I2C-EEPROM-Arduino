@@ -40,8 +40,8 @@ public:
 	uint8_t fulladdr;
 	
 private:
-	void read16Byte(unsigned int addr);
-	void write16Byte(unsigned int addr);
+	void readMiniBuffer(unsigned int addr);
+	void writeMiniBuffer(unsigned int addr);
 	uint8_t minibuffer[MINIBUFFER];
 	int page_size;	
 };//end class

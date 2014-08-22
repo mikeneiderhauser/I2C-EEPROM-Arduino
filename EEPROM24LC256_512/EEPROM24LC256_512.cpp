@@ -37,11 +37,11 @@ void EEPROM256_512::begin(uint8_t addr, uint8_t mode)
 {
 	if(addr > 7) addr=7;
     fulladdr = I2CBASEADDR|addr;
-	if(mode==1)
+	if(mode==MODE_512)
 	{
 		page_size=PAGE512;
 	}
-	else
+	else //mode==MODE_256
 	{
 		//assume default as 256
 		page_size=PAGE256;
@@ -165,4 +165,25 @@ void EEPROM256_512::write16Byte(unsigned int addr)
     Wire.endTransmission();
 	delay(5);
 }//end write16Byte
+
+//512 class
+EEPROM512::EEPROM512(): EEPROM256_512(){/*Use base class constructor*/}
+
+EEPROM512::~EEPROM512() {/*Nothing to deconstruct*/}
+
+void EEPROM512::begin(uint8_t addr){
+	EEPROM256_512::begin(addr,MODE_512);
+}
+
+//256 class
+EEPROM256::EEPROM256(): EEPROM256_512(){/*Use base class constructor*/}
+
+EEPROM256::~EEPROM256() {/*Nothing to deconstruct*/}
+
+void EEPROM256::begin(uint8_t addr){
+	EEPROM256_512::begin(addr,MODE_256);
+}
+
+
+
 #endif

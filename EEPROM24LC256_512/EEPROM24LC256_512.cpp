@@ -6,7 +6,7 @@
   the functionality to read and write pages (64 or 128 bytes) and 
   individual bytes to a page number or address on the EEPROM.
   
-  Each page is written in a 16 byte burst mode to account for the
+  Each page is written in a burst mode to account for the
   buffer limit of the Wire library in the Arduino Platform.
 
   This library is to be used "as-is" without warranty. Please report
@@ -37,11 +37,11 @@ void EEPROM256_512::begin(uint8_t addr, uint8_t mode)
 {
 	if(addr > 7) addr=7;
     fulladdr = I2CBASEADDR|addr;
-	if(mode==1)
+	if(mode==MODE_512)
 	{
 		page_size=PAGE512;
 	}
-	else
+	else //mode==MODE_256
 	{
 		//assume default as 256
 		page_size=PAGE256;
@@ -95,7 +95,7 @@ void EEPROM256_512::readPage(unsigned int page_number, uint8_t* data)
     {
 		offset = (MINIBUFFER*itr);
 		lower_addr = addr_base + offset;
-		read16Byte(lower_addr);
+		readMiniBuffer(lower_addr);
 		for(index=offset;index<((MINIBUFFER)+offset);index++)
 		{
 			data[index] = minibuffer[(index-offset)];
@@ -128,41 +128,62 @@ void EEPROM256_512::writePage(unsigned int page_number, uint8_t* data)
 		{
 			minibuffer[(index-offset)] = data[index];
 		}//end copy loop 
-		write16Byte(lower_addr);
+		writeMiniBuffer(lower_addr);
 	}//end itr loop
 }//end writePage
 
-void EEPROM256_512::read16Byte(unsigned int addr)
+void EEPROM256_512::readMiniBuffer(unsigned int addr)
 {
     uint8_t ct = 0;
-    //assuming char* data is 16 byte buffer
+    //assuming char* data is byte buffer of size MINIBUFFER
     Wire.beginTransmission(fulladdr);//begin transmission on the wire
     //32768 bytes... addressed by 2 bytes (16bits)
     Wire.write((int)(addr >> 8));   // MSB write upper 8 bits to wire (by bit shifting to right)
     Wire.write((int)(addr & 0xFF)); // LSB write lower 8 bits to wire (by bit & by 0xFF)
     Wire.endTransmission();//end the transmission on the wire
     	
-    Wire.requestFrom((uint8_t)fulladdr,(uint8_t)16);//request 1 byte from EEPROM (memory location sent above)
+    Wire.requestFrom((uint8_t)fulladdr,(uint8_t)(MINIBUFFER));//request 1 byte from EEPROM (memory location sent above)
     while (Wire.available())
     {
         minibuffer[ct] = Wire.read();
         ct++;
     }
-}//end read16Byte
+}//end readMiniBuffer
 
-void EEPROM256_512::write16Byte(unsigned int addr)
+void EEPROM256_512::writeMiniBuffer(unsigned int addr)
 {
 	uint8_t ct=0;
     Wire.beginTransmission(fulladdr);//begin transmission on wire
     //32768 bytes... addressed by 2 bytes (16bits)
     Wire.write((int)(addr >> 8));   // MSB write upper 8 bits to wire (by bit shifting to right)
     Wire.write((int)(addr & 0xFF)); // LSB write lower 8 bits to wire (by bit & by 0xFF)
-    while(ct<16)
+    while(ct<MINIBUFFER)
     {
 		Wire.write((uint8_t)minibuffer[ct]);
 		ct++;
     }  
     Wire.endTransmission();
 	delay(5);
-}//end write16Byte
+}//end writeMiniBuffer
+
+//512 class
+EEPROM512::EEPROM512(): EEPROM256_512(){/*Use base class constructor*/}
+
+EEPROM512::~EEPROM512() {/*Nothing to deconstruct*/}
+
+void EEPROM512::begin(uint8_t addr){
+	EEPROM256_512::begin(addr,MODE_512);
+}
+
+//256 class
+EEPROM256::EEPROM256(): EEPROM256_512(){/*Use base class constructor*/}
+
+EEPROM256::~EEPROM256() {/*Nothing to deconstruct*/}
+
+void EEPROM256::begin(uint8_t addr){
+	EEPROM256_512::begin(addr,MODE_256);
+}
+
+
+
 #endif

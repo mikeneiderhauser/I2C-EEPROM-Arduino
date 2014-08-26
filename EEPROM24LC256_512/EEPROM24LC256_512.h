@@ -22,6 +22,8 @@
 #define PAGE256 64
 #define PAGE512 128
 #define MINIBUFFER 16
+#define MODE_256 0
+#define MODE_512 1
 #define I2CBASEADDR 0x50
 
 class EEPROM256_512
@@ -38,10 +40,29 @@ public:
 	uint8_t fulladdr;
 	
 private:
-	void read16Byte(unsigned int addr);
-	void write16Byte(unsigned int addr);
+	void readMiniBuffer(unsigned int addr);
+	void writeMiniBuffer(unsigned int addr);
 	uint8_t minibuffer[MINIBUFFER];
 	int page_size;	
 };//end class
+
+
+class EEPROM256 : public EEPROM256_512
+{
+public:
+	EEPROM256(); //constructor
+	~EEPROM256(); //deconstructor
+	void begin(uint8_t addr);
+};//end class
+
+
+class EEPROM512 : public EEPROM256_512
+{
+public:
+	EEPROM512(); //constructor
+	~EEPROM512(); //deconstructor
+	void begin(uint8_t addr);
+};//end class
+
 
 #endif
